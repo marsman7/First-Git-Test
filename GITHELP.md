@@ -1,5 +1,11 @@
 # GIT Help
 
+Marker : develop branch
+
+## Strategie
+
+
+
 ## First steps
 
 git init
