@@ -1,5 +1,5 @@
 {
     "c_cpp.includePath": [
-      "/usr/include/gtk-4.0" // Ersetzen Sie diesen Pfad nach Bedarf
+      "/usr/include/gtk-3.0" // Ersetzen Sie diesen Pfad nach Bedarf
     ]
   }
