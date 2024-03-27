@@ -26,8 +26,10 @@ void number_button_clicked(GtkWidget *button, gpointer data)
   char button_char = *label;
   switch (button_char) {
     case 'C':
-//      gtk_entry_set_text (GTK_ENTRY(data), "");
       gtk_editable_set_text(GTK_EDITABLE(data), "");
+      break;
+    case '=':
+      // rechne Ergebnis aus;
       break;
     default:
       GtkEntryBuffer *buffer = gtk_entry_get_buffer (GTK_ENTRY(data));
