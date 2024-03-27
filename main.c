@@ -70,8 +70,19 @@ static void activate (GtkApplication *app, gpointer user_data)
   // Erstellen Sie einen Box-Container und fügen Sie das Eingabefeld, den Button und den Tastenblock hinzu
   box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
   gtk_box_append(GTK_BOX(box), entry);
-  gtk_box_append(GTK_BOX(box), button);
+  gtk_widget_set_margin_top(entry, 10);
+  gtk_widget_set_margin_start(entry, 10);
+  gtk_widget_set_margin_end(entry, 10);
+
   gtk_box_append(GTK_BOX(box), grid);
+  gtk_widget_set_halign(grid, GTK_ALIGN_CENTER);
+  gtk_widget_set_margin_top(grid, 10);
+  gtk_widget_set_margin_bottom(grid, 10);
+
+  gtk_box_append(GTK_BOX(box), button);
+  gtk_widget_set_margin_start(button, 10);
+  gtk_widget_set_margin_end(button, 10);
+  gtk_widget_set_margin_bottom(button, 10);
 
   // Fügen Sie den Box-Container zum Fenster hinzu
   gtk_window_set_child (GTK_WINDOW (window), box);
