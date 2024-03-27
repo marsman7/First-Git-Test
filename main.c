@@ -1,11 +1,16 @@
 #include <gtk/gtk.h>
+// https://developer-old.gnome.org/gtk3/stable/GtkWidget.html
+
+#define BUTTON_NUM  20
 
 GtkWidget *window;
 GtkWidget *entry;
 GtkWidget *button;
 GtkWidget *grid;
-GtkWidget *buttons[10];
+GtkWidget *buttons[BUTTON_NUM];
 GtkWidget *box;
+
+const char *buttonlabels[BUTTON_NUM] = {"C","/","*","-","7","8","9","+","4","5","6","(","1","2","3",")"," ","0",",","="};
 
 // Funktion zum Behandeln des Button-Klicks
 void button_clicked(GtkWidget *button, gpointer data) {
@@ -15,9 +20,16 @@ void button_clicked(GtkWidget *button, gpointer data) {
 
 // Funktion zum Behandeln der Ziffern-Buttons
 void number_button_clicked(GtkWidget *button, gpointer data) {
-  const char *number = gtk_button_get_label(GTK_BUTTON(button));
-  gtk_entry_set_text(GTK_ENTRY(data), number);
-//  gtk_entry_append_text(GTK_ENTRY(data), number);
+  const char *label = gtk_button_get_label(GTK_BUTTON(button));
+  char button_char = *label;
+  switch (button_char) {
+    case 'C':
+      gtk_entry_set_text (GTK_ENTRY(data), "");
+      break;
+    default:
+      GtkEntryBuffer *buffer = gtk_entry_get_buffer (GTK_ENTRY(data));
+      gtk_entry_buffer_insert_text (buffer, -1, label, -1);
+  }
 }
 
 int main(int argc, char *argv[]) {
@@ -40,34 +52,24 @@ int main(int argc, char *argv[]) {
   // Verbinden Sie den delete-event-Handler mit gtk_main_quit()
   g_signal_connect(window, "delete-event", G_CALLBACK(gtk_main_quit), NULL);
 
-/**/
-
   // Erstellen Sie ein GtkGrid-Widget für den Tastenblock
   grid = gtk_grid_new();
   gtk_grid_set_column_spacing(GTK_GRID(grid), 5);
   gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
 
   // Erstellen Sie 10 Buttons für die Ziffern 0-9
-  for (int i = 0; i < 10; i++) {
-    buttons[i] = gtk_button_new_with_label(g_strdup_printf("%d", i));
+  for (int i = 0; i < BUTTON_NUM; i++) {
+    buttons[i] = gtk_button_new_with_label(buttonlabels[i]);
     g_signal_connect(buttons[i], "clicked", G_CALLBACK(number_button_clicked), entry);
   }
 
   // Fügen Sie die Buttons in das Grid-Widget ein
-  int row = 0, column = 0;
-  for (int i = 0; i < 10; i++) {
-    gtk_grid_attach(GTK_GRID(grid), buttons[i], column, row, 1, 1);
-    if (column == 2) {
-      column = 0;
-      row++;
-    } else {
-      column++;
-    }
+  for (int i = 0; i < BUTTON_NUM; i++) {
+    gtk_grid_attach(GTK_GRID(grid), buttons[i], i % 4, i / 4, 1, 1);
   }
 
-/**/
   // Erstellen Sie einen Box-Container und fügen Sie das Eingabefeld, den Button und den Tastenblock hinzu
-  box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+  box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
   gtk_box_pack_start(GTK_BOX(box), entry, TRUE, TRUE, 0);
   gtk_box_pack_start(GTK_BOX(box), button, TRUE, TRUE, 0);
   gtk_box_pack_start(GTK_BOX(box), grid, TRUE, TRUE, 0);
