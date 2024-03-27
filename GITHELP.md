@@ -1,13 +1,5 @@
 # GIT Help
 
-Marker : feature-keybord branch
-
-Noch eine Änderung
-
-## Strategie
-
-
-
 ## First steps
 
 git init

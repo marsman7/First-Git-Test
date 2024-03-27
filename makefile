@@ -12,19 +12,27 @@ HDRS = \
 
 # Bibliotheken
 LIBS = \
-  -lgtk4
+  -lgtk3
 
 # Objektdateien
 OBJS = $(SRCS:.c=.o)
 
 # Flagge für GTK+-Entwicklung
-GTK3_CFLAGS = -Wall `pkg-config --cflags gtk4`
+GTK3_CFLAGS = -Wall `pkg-config --cflags glib-2.0` \
+			-I/usr/include/gtk-3.0 \
+			-I/usr/include/glib-2.0 \
+			-I/usr/include/pango-1.0 \
+			-I/usr/include/harfbuzz \
+			-I/usr/include/cairo \
+			-I/usr/include/gdk-pixbuf-2.0 \
+			-I/usr/include/atk-1.0
 
 # Flagge für C-Compiler
 CFLAGS = $(GTK3_CFLAGS)
 
 # Flagge für Linker
-LDFLAGS = `pkg-config --libs gtk4` -L/usr/local/lib -L/usr/lib
+LDFLAGS = `pkg-config --libs gtk+-3.0` -L/usr/local/lib -L/usr/lib
+#LDFLAGS = `pkg-config --libs glib-2.0` -L/usr/local/lib -L/usr/lib
 
 # Programmname
 PROGRAM = $(PROJECT)
