@@ -1,5 +1,5 @@
 #include <gtk/gtk.h>
-// https://developer-old.gnome.org/gtk3/stable/GtkWidget.html
+// https://developer-old.gnome.org/gtk3/stable
 
 #define BUTTON_NUM  20
 
