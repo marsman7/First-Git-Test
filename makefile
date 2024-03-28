@@ -4,11 +4,11 @@ PROJECT = taschenrechner
 # Quellcodedateien
 SRCS = \
   main.c \
-#  button_handler.c
+  calc.c
 
 # Headerdateien
 HDRS = \
-#  button_handler.h
+  calc.h
 
 # Bibliotheken
 LIBS = \

@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "stdbool.h": "c",
+        "cstdbool": "c",
+        "c++config.h": "c",
+        "functional": "c"
+    }
+}
