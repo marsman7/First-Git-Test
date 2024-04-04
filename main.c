@@ -1,6 +1,8 @@
 #include <gtk/gtk.h>
 // https://docs.gtk.org/gtk4/
 
+#include "calc.h"
+
 #define BUTTON_NUM  20
 
 GtkWidget *window;

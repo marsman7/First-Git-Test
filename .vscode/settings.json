@@ -3,6 +3,7 @@
         "stdbool.h": "c",
         "cstdbool": "c",
         "c++config.h": "c",
-        "functional": "c"
+        "functional": "c",
+        "ctype.h": "c"
     }
 }
