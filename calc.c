@@ -4,9 +4,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <ctype.h>
+#include <string.h>
 #include "calc.h"
 
-char *termstart;
+const char *termstart;
 int64_t  result;
 //uint16_t FehlerPos;     //: integer;
 uint16_t FehlerNum = OK;
@@ -18,6 +19,9 @@ char FehlerText[MAX_ERROR_LEN] = {0};     //: string;
 //    & AND, | OR, ~ XOR
 const char *OpStr[OP_NUMBER] = {"+","-","*","/",">>","<<","&","|","~"};      //: array[0..8] of string = ('+','-','*','/','>>','<<','&','|','~');
 
+bool find_operation(const char *pStart, const char *pEnd, const char *Opp, const char **pOpp);
+uint16_t term_disassemble(const char *term, const char *term_end, int64_t *subresult);
+
 /** ***************************************************************************
  * Name
  *
@@ -26,16 +30,24 @@ const char *OpStr[OP_NUMBER] = {"+","-","*","/",">>","<<","&","|","~"};      //:
  * @param term  Term-String, der berechnet werden soll
  * @return Fehlernummer
  *************************************************************************** */
-uint16_t calc_term(char *term)
+uint16_t calc_term(const char *term)
 {
     result = 0;
-    if (!term) return ERR_TERM_EMPTY;
+    FehlerNum = OK;
+    if (!term) {
+      FehlerNum = ERR_TERM_EMPTY;
+      return FehlerNum;
+    }
 
-    if (!strlen(term)) return ERR_TERM_EMPTY;
-
-    printf("Term [%s]\n", term);
+    if (!strlen(term)) {
+      FehlerNum = ERR_TERM_EMPTY;
+      return FehlerNum;
+    }
 
     termstart = term;
+
+    printf("Start Term [%s] %p %p \n", term, term, term + strlen(term));
+
     return term_disassemble(term, term + strlen(term) - 1, &result);
 }
 
@@ -48,17 +60,17 @@ uint16_t calc_term(char *term)
  * @param term_end  Zeige auf letztes Zeichen des Terms
  * @return Fehlernummer
  *************************************************************************** */
-uint16_t term_disassemble(char *term, char *term_end, int64_t *subresult)
+uint16_t term_disassemble(const char *term, const char *term_end, int64_t *subresult)
 {
-    char *pPos = term;         // Zeiger auf Position die verarbeitet wird
-    char *pEnd = term_end;   // Zeiger auf Ende des Terms
-    char *pOpp = NULL;
+    const char *pPos = term;         // Zeiger auf Position die verarbeitet wird
+    const char *pEnd = term_end;   // Zeiger auf Ende des Terms
+    const char *pOpp = NULL;
     int32_t i = 0;      //: integer;
-    uint32_t n;         //: integer;
-    uint64_t left_opp = 0;        //left operant : integer;
-    uint64_t right_opp = 0;        //right operant : integer;
+    int64_t left_opp = 0;        //left operant : integer;
+    int64_t right_opp = 0;        //right operant : integer;
+    int64_t tempresult = 0;
 
-    uint64_t tempresult = 0;
+    printf("Sub Term 1 [%ld] [%ld] \n", pPos-termstart, pEnd-termstart);
 
     if (FehlerNum != OK) {
         return FehlerNum;
@@ -69,13 +81,17 @@ uint16_t term_disassemble(char *term, char *term_end, int64_t *subresult)
         pPos++;
     }
 
+    printf("Sub Term 2 [%ld] [%ld] \n", pPos-termstart, pEnd-termstart);
+
     // Trim right (find end)
     while(pEnd > pPos) {
-        pEnd--;
         if (!isspace(*pEnd)) {
             break;
         }
+        pEnd--;
     }
+
+    printf("Sub Term 3 [%ld] [%ld] \n", pPos-termstart, pEnd-termstart);
 
     if (pEnd == pPos) {
       // Sollte eigentlich nie auftreten
@@ -84,11 +100,12 @@ uint16_t term_disassemble(char *term, char *term_end, int64_t *subresult)
     }
 
     printf("Subterm start[%d] end[%d] schar[%c] echar[%c]\n"
-        , (uint32_t)(pPos-termstart), (uint32_t)(pEnd-termstart), pPos, pEnd);
+        , (uint16_t)(pPos-termstart), (uint16_t)(pEnd-termstart), (char)*pPos, (char)*pEnd);
 
     i = 0;
     while (i < OP_NUMBER) {
-      if (find_operation(pPos, OpStr[i], &pOpp)) {
+      if (find_operation(pPos, pEnd, OpStr[i], &pOpp)) {
+        printf("Operation erkannt [%s] Pos[%d]", OpStr[i], (uint16_t)(pOpp-termstart));
         if (term_disassemble(pPos, pOpp-1, &left_opp)) {
           return FehlerNum;
         }
@@ -117,7 +134,7 @@ uint16_t term_disassemble(char *term, char *term_end, int64_t *subresult)
 
     // Ist Term in Klammern
     if (*pPos == '(') {
-        if (pEnd == ')') {
+        if (*pEnd == ')') {
           printf("Klammerauflösung\n");
           if (term_disassemble(pPos+1, pEnd-1, &tempresult)) {
             return FehlerNum;
@@ -134,7 +151,8 @@ uint16_t term_disassemble(char *term, char *term_end, int64_t *subresult)
     if (isalpha(*pPos) || *pPos == '_') {
       printf("Variablenauflösung\n");
       uint16_t i = 0;
-      char *pVarEnd = pPos;
+      char *pVarEnd;
+      pVarEnd = (char*)pPos;
 #warning Fehler zu langer Variablenname abfangen              
       while ((pVarEnd <= pEnd) && (isalnum(*pVarEnd) || *pVarEnd == '_')) {
         pVarEnd++;
@@ -151,13 +169,14 @@ uint16_t term_disassemble(char *term, char *term_end, int64_t *subresult)
     }
 
     // Wenn Term eine Zahl ist
-//    if (term[1] in ['0'..'9']) {
     if (isdigit(*pPos)) {
-      while(isdigit(*pPos)) {
+      while(isdigit(*pPos) && pPos <= pEnd) {
         tempresult *= 10;
         tempresult += *pPos & 0x0f;
+        pPos++;
       }
-      printf("Zahl erkannt %d\n", tempresult);
+      printf("Zahl erkannt %ld\n", tempresult);
+      result = tempresult;
     } else {
       FehlerNum = ERR_UNKNOWN;
       return FehlerNum;
@@ -176,22 +195,20 @@ uint16_t term_disassemble(char *term, char *term_end, int64_t *subresult)
  * @param Term  Term, der nach einer Operation/Verknüpfung durchsucht werden soll
  * @param Opp   Operation/Verknüpfung nach der in Term gesucht werden soll
  * @param pPos  Rückgabe der Position an der die Operation gefunden wurde
- * @return Fehler bool
+ * @return true wenn Rechenoperation gefunden
  *************************************************************************** */
-bool find_operation(char *subterm, char *Opp, char **pPos)
+//bool find_operation(const char *subterm, const char *Opp, const char **pPos)
+bool find_operation(const char *pPos, const char *pEnd, const char *Opp, const char **pOpp)
 {
   uint16_t i = 0;   // Zeichenzähler
-  uint16_t l = 0;   // Merker für subterm Länge
   uint16_t k = 0;   // Klammerzähler, '(' plus 1 ; ')' minus 1
 
-//  for (n = 1; n <= strlen(subterm); n++) {
-  l = strlen(subterm);
-  while (i < l) {
-    if (*subterm == '(') {
+  while (pPos <= pEnd) {
+    if (*pPos == '(') {
       k++;
     }
 
-    if (*subterm == ')') {
+    if (*pPos == ')') {
       k--;
       if (k < 0) {
         FehlerNum = ERR_BRACKET_OPEN;
@@ -200,15 +217,15 @@ bool find_operation(char *subterm, char *Opp, char **pPos)
       }
     }
 
-    if ((k = 0) && strncmp(subterm, Opp, strlen(Opp))) {
-      *pPos = subterm;
+    if ((k = 0) && strncmp(pPos, Opp, strlen(Opp))) {
+      *pOpp = pPos;
       return true;
     }
     i++;
-    subterm++;
+    pPos++;
   }
 
-  *pPos = 0;
+  pOpp = NULL;
   if (k > 0) {
     FehlerNum = ERR_BRACKET_CLOSE;
     snprintf(FehlerText, MAX_ERROR_LEN, "Geöffnete Klammer gefunden, die nicht geschlossen wird.");
@@ -227,7 +244,7 @@ bool find_operation(char *subterm, char *Opp, char **pPos)
  * @param a  Discription
  * @return no
  *************************************************************************** */
-int64_t GetCalcValue() {
+int64_t get_calc_result() {
   return result;
 }
 

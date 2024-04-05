@@ -32,6 +32,12 @@ void number_button_clicked(GtkWidget *button, gpointer data)
       break;
     case '=':
       // rechne Ergebnis aus;
+      const char *term = gtk_editable_get_text(GTK_EDITABLE(data));
+      if (!calc_term(term)) {
+        printf("Kein Fehler. Ergebnis : %ld\n", get_calc_result());
+      } else {
+        printf("Fehler aufgetreten\n");
+      }
       break;
     default:
       GtkEntryBuffer *buffer = gtk_entry_get_buffer (GTK_ENTRY(data));

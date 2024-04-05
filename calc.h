@@ -14,8 +14,7 @@ enum ERROR {
     ERR_UNKNOWN_VARIABLE
 };
 
-uint16_t calc_term(char *term);
-uint16_t term_disassemble(char *term, uint16_t p, int64_t *result);
-bool find_operation(char *term, char *Op, uint16_t *pPos);
+uint16_t calc_term(const char *term);
+int64_t get_calc_result();
 
 #endif
