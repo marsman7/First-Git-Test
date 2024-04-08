@@ -5,13 +5,14 @@
 #define MAX_ERROR_LEN 512
 
 enum ERROR {
-    OK,
+    OK = 0,
     ERR_UNKNOWN,
     ERR_BRACKET_OPEN,
     ERR_BRACKET_CLOSE,
     ERR_TERM_EMPTY,
     ERR_SHORT_TERM,
-    ERR_UNKNOWN_VARIABLE
+    ERR_UNKNOWN_VARIABLE,
+    WARN_EMPTY_TERM
 };
 
 uint16_t calc_term(const char *term);

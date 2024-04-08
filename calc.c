@@ -77,14 +77,14 @@ uint16_t term_disassemble(const char *term, const char *term_end, int64_t *subre
     }
 
     // Trim left (find begin)
-    while (isspace(*pPos)) {
+    while (isspace(*pPos) && (pPos < pEnd)) {
         pPos++;
     }
 
     printf("Sub Term 2 [%ld] [%ld] \n", pPos-termstart, pEnd-termstart);
 
     // Trim right (find end)
-    while(pEnd > pPos) {
+    while(pPos <= pEnd) {
         if (!isspace(*pEnd)) {
             break;
         }
@@ -93,15 +93,26 @@ uint16_t term_disassemble(const char *term, const char *term_end, int64_t *subre
 
     printf("Sub Term 3 [%ld] [%ld] \n", pPos-termstart, pEnd-termstart);
 
+    if (pPos > pEnd) {
+      // Leerer Term
+      return WARN_EMPTY_TERM;
+    }
+
+    printf("Sub Term 4 [%ld] [%ld] \n", pPos-termstart, pEnd-termstart);
+
     printf("Subterm start[%d] end[%d] schar[%c] echar[%c]\n"
         , (uint16_t)(pPos-termstart), (uint16_t)(pEnd-termstart), (char)*pPos, (char)*pEnd);
 
     i = 0;
+    uint16_t err = 0;
     while (i < OP_NUMBER) {
       if (find_operation(pPos, pEnd, OpStr[i], &pOpp)) {
         printf("Operation erkannt [%s] Pos[%d]\n", OpStr[i], (uint16_t)(pOpp-termstart));
-        if (term_disassemble(pPos, pOpp-1, &left_opp)) {
-          return FehlerNum;
+        err = term_disassemble(pPos, pOpp-1, &left_opp);
+        if (err) {
+          if (err != WARN_EMPTY_TERM || *OpStr[i] != '-') {
+            return FehlerNum;
+          }
         }
         if (term_disassemble(pOpp+1, pEnd, &right_opp)) {
           return FehlerNum;
@@ -111,7 +122,16 @@ uint16_t term_disassemble(const char *term, const char *term_end, int64_t *subre
 
         switch (i) {
           case 0: tempresult = left_opp + right_opp; break;
-          case 1: tempresult = left_opp - right_opp; break;
+          case 1: 
+            if (err == WARN_EMPTY_TERM) {
+              // Vorzeichen
+              tempresult = right_opp * -1;
+            } else {
+              // Rechenoperation
+              tempresult = left_opp - right_opp; 
+            }
+            break;
+
           case 2: tempresult = left_opp * right_opp; break;
           case 3: tempresult = left_opp / right_opp; break;
           case 4: tempresult = left_opp >> right_opp; break;
