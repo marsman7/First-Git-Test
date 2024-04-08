@@ -77,7 +77,7 @@ uint16_t term_disassemble(const char *term, const char *term_end, int64_t *subre
     }
 
     // Trim left (find begin)
-    while ((*pPos) && isspace(*pPos)) {
+    while (isspace(*pPos)) {
         pPos++;
     }
 
@@ -93,25 +93,21 @@ uint16_t term_disassemble(const char *term, const char *term_end, int64_t *subre
 
     printf("Sub Term 3 [%ld] [%ld] \n", pPos-termstart, pEnd-termstart);
 
-    if (pEnd == pPos) {
-      // Sollte eigentlich nie auftreten
-      result = 0;
-      return OK;
-    }
-
     printf("Subterm start[%d] end[%d] schar[%c] echar[%c]\n"
         , (uint16_t)(pPos-termstart), (uint16_t)(pEnd-termstart), (char)*pPos, (char)*pEnd);
 
     i = 0;
     while (i < OP_NUMBER) {
       if (find_operation(pPos, pEnd, OpStr[i], &pOpp)) {
-        printf("Operation erkannt [%s] Pos[%d]", OpStr[i], (uint16_t)(pOpp-termstart));
+        printf("Operation erkannt [%s] Pos[%d]\n", OpStr[i], (uint16_t)(pOpp-termstart));
         if (term_disassemble(pPos, pOpp-1, &left_opp)) {
           return FehlerNum;
         }
         if (term_disassemble(pOpp+1, pEnd, &right_opp)) {
           return FehlerNum;
         }
+
+        printf("Rechen Operanten %ld %s %ld\n", left_opp, OpStr[i], right_opp);
 
         switch (i) {
           case 0: tempresult = left_opp + right_opp; break;
@@ -126,6 +122,7 @@ uint16_t term_disassemble(const char *term, const char *term_end, int64_t *subre
           default:
               ;
         }
+        printf("Zwischenergebnis %ld\n", tempresult);
         *subresult = tempresult;
         return OK;
       }
@@ -168,6 +165,11 @@ uint16_t term_disassemble(const char *term, const char *term_end, int64_t *subre
       return FehlerNum;
     }
 
+    // Wenn mit Komma beginnt = 0,xx
+    if (*pPos == ',') {
+
+    }
+
     // Wenn Term eine Zahl ist
     if (isdigit(*pPos)) {
       while(isdigit(*pPos) && pPos <= pEnd) {
@@ -176,7 +178,7 @@ uint16_t term_disassemble(const char *term, const char *term_end, int64_t *subre
         pPos++;
       }
       printf("Zahl erkannt %ld\n", tempresult);
-      result = tempresult;
+      *subresult = tempresult;
     } else {
       FehlerNum = ERR_UNKNOWN;
       return FehlerNum;
@@ -209,15 +211,16 @@ bool find_operation(const char *pPos, const char *pEnd, const char *Opp, const c
     }
 
     if (*pPos == ')') {
-      k--;
-      if (k < 0) {
+      if (k == 0) {
         FehlerNum = ERR_BRACKET_OPEN;
         snprintf(FehlerText, MAX_ERROR_LEN, "Klammer nicht geöffnet.");
         return false;
       }
+      k--;
     }
 
-    if ((k = 0) && strncmp(pPos, Opp, strlen(Opp))) {
+    if ((k == 0) && !strncmp(pPos, Opp, strlen(Opp))) {
+      printf("Find Opp start[%d] end[%d] Opp[%s]\n", (uint16_t)(pPos-termstart), (uint16_t)(pEnd-termstart), Opp);
       *pOpp = pPos;
       return true;
     }
@@ -225,7 +228,6 @@ bool find_operation(const char *pPos, const char *pEnd, const char *Opp, const c
     pPos++;
   }
 
-  pOpp = NULL;
   if (k > 0) {
     FehlerNum = ERR_BRACKET_CLOSE;
     snprintf(FehlerText, MAX_ERROR_LEN, "Geöffnete Klammer gefunden, die nicht geschlossen wird.");
